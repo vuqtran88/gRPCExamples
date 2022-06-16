@@ -7,7 +7,7 @@ option csharp_namespace = "GrpcServiceExample";
 package WeatherForecast;
 
 service WeatherForecasts {
-  rpc GetWeatherStream (stream RequestContext) returns (stream WeatherData);
+  rpc GetWeatherStream (RequestContext) returns (stream WeatherData);
 }
 
 message WeatherData {

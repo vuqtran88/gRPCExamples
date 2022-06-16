@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Grpc.Net.Client.Web;
 using NewRelic.Agent.Core.Segments;
 using System;
 using System.Collections.Generic;
@@ -15,13 +16,14 @@ namespace GrpcCustomLib
     {
         public static async Task<string> SayHello(string name)
         {
-#if !NETSTANDARD2_0
-            Console.WriteLine($"This app target framework is NOT netstandard2.0. Framework: {Environment.Version}");
-#else
-            Console.WriteLine($"This app target framework is netstandard2.0. Framework: {Environment.Version}");
+            var grpcOption = new GrpcChannelOptions();
+            grpcOption.Credentials = new SslCredentials();
+
+#if NETFRAMEWORK
+            grpcOption.HttpHandler = new WinHttpHandler();
 #endif
 
-            var channel = GrpcChannel.ForAddress("https://localhost:5005");
+            using var channel = GrpcChannel.ForAddress("https://localhost:5005", grpcOption);
 
             var client = new Greeter.GreeterClient(channel);
 
@@ -34,9 +36,10 @@ namespace GrpcCustomLib
 
         }
 
-        public static async Task GetWeatherStream(int timeout)
+        public static async Task GetWeatherStream(int timeoutMs)
         {
             var grpcOption = new GrpcChannelOptions();
+            grpcOption.Credentials = new SslCredentials();
 
 #if NETFRAMEWORK
             grpcOption.HttpHandler = new WinHttpHandler();
@@ -45,30 +48,14 @@ namespace GrpcCustomLib
             using var channel = GrpcChannel.ForAddress("https://localhost:5005", grpcOption);
             var client = new WeatherForecasts.WeatherForecastsClient(channel);
 
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout));
+            var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(timeoutMs));
 
-            using var streams = client.GetWeatherStream(cancellationToken: cts.Token);
 
-            var requestStream = streams.RequestStream;
-            var responseStream = streams.ResponseStream;
+            var requestData = new RequestContext();
 
-            var task1 = Task.Run(async () =>
-            {
-                try
-                {
-                    var requestData = new RequestContext();
+            var responseStream = client.GetWeatherStream(requestData, cancellationToken: cts.Token).ResponseStream;
 
-                    requestData.Condition = "FailedPrecondition";
-
-                    await requestStream.WriteAsync(requestData);
-                }
-                catch (Exception ex) 
-                {
-                    Console.WriteLine(ex.ToString());
-                }
-            });
-
-            var task2 = Task.Run(async () =>
+            var task = Task.Run(async () =>
             {
                 try
                 {
@@ -92,7 +79,7 @@ namespace GrpcCustomLib
                 }
             });
 
-            await Task.WhenAll(task1, task2, Task.Delay(TimeSpan.FromSeconds(timeout)));
+            await Task.WhenAll(task, Task.Delay(TimeSpan.FromSeconds(timeoutMs)));
         }
 
         public static async Task RecordSpan(int timeoutMs) 
@@ -102,7 +89,9 @@ namespace GrpcCustomLib
 
             grpcOption.Credentials = new SslCredentials();
 #if NETFRAMEWORK
-            grpcOption.HttpHandler = new Http2CustomHandler();
+
+            grpcOption.HttpHandler = new WinHttpHandler();
+
 #endif
 
             using var channel = GrpcChannel.ForAddress("https://localhost:5005", grpcOption);
