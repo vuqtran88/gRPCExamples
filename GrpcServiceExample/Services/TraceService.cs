@@ -38,7 +38,7 @@ namespace GrpcServiceExample
 			while (requestStream.MoveNext(context.CancellationToken).Result/* && DateTime.Now < expireDtm*/)
 			{
 				//pretending busy
-				Thread.Sleep(300);
+				Thread.Sleep(100);
 
 				var x = Interlocked.Increment(ref spanCount);
 				var span = requestStream.Current;

@@ -15,11 +15,6 @@ namespace GrpcServiceExample
         public override async Task GetWeatherStream(RequestContext request, IServerStreamWriter<WeatherData> responseStream, ServerCallContext context)
         {
 
-            if (request.Condition == "FailedPrecondition")
-            {
-                throw new RpcException(new Status(Grpc.Core.StatusCode.FailedPrecondition, "My exception!"));
-            }
-
             var rng = new Random();
             var now = DateTime.UtcNow;
 

@@ -11,12 +11,12 @@ namespace GrpcClientExample
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting Client. Press any keys");
+            Console.WriteLine("Starting Client. Press any key to start.");
             while (Console.ReadKey().Key != ConsoleKey.Escape)
             {
-                //GrpcCustomLib.GrpcCustomLib.RecordSpan(300000).Wait(300000);
+                GrpcCustomLib.GrpcCustomLib.RecordSpan(300000).Wait(300000);
                 //var a = GrpcCustomLib.GrpcCustomLib.SayHello("Vu").Result;
-                GrpcCustomLib.GrpcCustomLib.GetWeatherStream(300000).Wait(300000);
+                //GrpcCustomLib.GrpcCustomLib.GetWeatherStream(300000).Wait(300000);
             }
         }
     }
